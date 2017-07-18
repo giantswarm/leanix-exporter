@@ -77,3 +77,4 @@ data:
   config.yml: |
     excludes:
       - kube-system
+      - kube-public

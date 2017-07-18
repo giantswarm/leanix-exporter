@@ -9,6 +9,7 @@ import (
 	"net/http"
 
 	"github.com/spf13/viper"
+	"k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
@@ -46,8 +47,9 @@ var runCmd = &cobra.Command{
 }
 
 type pod struct {
-	Name   string
-	Status string
+	Name              string
+	Status            string
+	ContainerStatuses []v1.ContainerStatus
 }
 type namespace struct {
 	Name string
@@ -99,8 +101,9 @@ func getPods(c *kubernetes.Clientset, ns string) []pod {
 	ps := []pod{}
 	for _, p := range pods.Items {
 		ps = append(ps, pod{
-			Name:   p.Name,
-			Status: string(p.Status.Phase),
+			Name:              p.Name,
+			Status:            string(p.Status.Phase),
+			ContainerStatuses: p.Status.ContainerStatuses,
 		})
 	}
 	return ps

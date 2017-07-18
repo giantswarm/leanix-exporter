@@ -3,6 +3,7 @@ package cmd
 import (
 	"encoding/json"
 	"fmt"
+	"time"
 
 	"github.com/spf13/cobra"
 
@@ -36,6 +37,7 @@ var runCmd = &cobra.Command{
 
 			b, _ := json.Marshal(leanixExport{
 				Namespaces: getNamespaces(clientset),
+				LastUpdate: time.Now(),
 			})
 			fmt.Fprintln(rw, string(b))
 		})
@@ -57,6 +59,7 @@ type namespace struct {
 }
 type leanixExport struct {
 	Namespaces []namespace
+	LastUpdate time.Time
 }
 
 func getNamespaces(c *kubernetes.Clientset) []namespace {

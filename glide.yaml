@@ -1,0 +1,16 @@
+package: github.com/giantswarm/leanix-exporter
+import:
+- package: github.com/giantswarm/certctl
+  version: master
+  subpackages:
+  - service/cert-signer
+  - service/spec
+- package: github.com/giantswarm/kubernetesdclient
+  version: master
+  subpackages:
+  - service/creator
+  - service/deleter
+  - service/updater
+- package: github.com/giantswarm/microkit
+  version: master
+- package: github.com/evanphx/json-patch

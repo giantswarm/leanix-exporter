@@ -23,7 +23,13 @@ spec:
             path: config.yml
       containers:
       - name: leanix-exporter
-        image: giantswarm/leanix-exporter:latest
+        image: giantswarm/leanix-exporter:{{SHA1}}
+        args:
+        - daemon
+        - --server.listen.address=http://0.0.0.0:8000
+        - --config.dirs=/var/run/leanix-exporter/configmap/
+        - --config.files=config
+        - --config.files=secret
         imagePullPolicy: IfNotPresent
         volumeMounts:
         - name: leanix-exporter-configmap

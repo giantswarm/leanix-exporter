@@ -75,7 +75,6 @@ func New(config Config) (*Service, error) {
 			return nil, microerror.MaskAny(err)
 		}
 	}
-	fmt.Println(config.Viper.AllKeys())
 
 	var exporterService *exporter.Service
 	{

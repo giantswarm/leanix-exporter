@@ -64,7 +64,9 @@ func New(config Config) (*Service, error) {
 
 	var exporterService *exporter.Service
 	{
-		exporterService, err = exporter.New(exporter.Config{Excludes: config.Viper.GetStringSlice(config.Flag.Service.Excludes)})
+		exporterConfig := exporter.DefaultConfig()
+		exporterConfig.Excludes = config.Viper.GetStringSlice(config.Flag.Service.Excludes)
+		exporterService, err = exporter.New(exporterConfig)
 		if err != nil {
 			return nil, microerror.MaskAny(err)
 		}
@@ -72,13 +74,14 @@ func New(config Config) (*Service, error) {
 
 	var versionService *version.Service
 	{
+		versionConfig := version.DefaultConfig()
 
-		versionService, err = version.New(version.Config{
-			Description: config.Description,
-			GitCommit:   config.GitCommit,
-			Name:        config.Name,
-			Source:      config.Source,
-		})
+		versionConfig.Description = config.Description
+		versionConfig.GitCommit = config.GitCommit
+		versionConfig.Name = config.Name
+		versionConfig.Source = config.Source
+
+		versionService, err = version.New(versionConfig)
 		if err != nil {
 			return nil, microerror.MaskAny(err)
 		}

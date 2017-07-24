@@ -24,6 +24,18 @@ type Config struct {
 	MicroServerConfig microserver.Config
 }
 
+// DefaultConfig provides a default configuration to create a new server object
+// by best effort.
+func DefaultConfig() Config {
+	return Config{
+		// Dependencies.
+		Service: nil,
+
+		// Settings.
+		MicroServerConfig: microserver.DefaultConfig(),
+	}
+}
+
 // New creates a new configured server object.
 func New(config Config) (microserver.Server, error) {
 	var err error
@@ -41,12 +53,12 @@ func New(config Config) (microserver.Server, error) {
 
 	var endpointCollection *endpoint.Endpoint
 	{
+		endpointConfig := endpoint.DefaultConfig()
+		endpointConfig.Logger = config.MicroServerConfig.Logger
+		endpointConfig.Middleware = middlewareCollection
+		endpointConfig.Service = config.Service
 
-		endpointCollection, err = endpoint.New(endpoint.Config{
-			Logger:     config.MicroServerConfig.Logger,
-			Middleware: middlewareCollection,
-			Service:    config.Service,
-		})
+		endpointCollection, err = endpoint.New(endpointConfig)
 
 		if err != nil {
 			return nil, microerror.MaskAny(err)

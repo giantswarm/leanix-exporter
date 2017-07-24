@@ -30,6 +30,12 @@ type Config struct {
 	Excludes []string
 }
 
+func DefaultConfig() Config {
+	return Config{
+		Excludes: []string{},
+	}
+}
+
 // New creates a new configured version service.
 func New(config Config) (*Service, error) {
 	// Settings.

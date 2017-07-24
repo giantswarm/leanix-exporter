@@ -25,6 +25,15 @@ type Config struct {
 	Source      string
 }
 
+func DefaultConfig() Config {
+	return Config{
+		Description: "",
+		GitCommit:   "",
+		Name:        "",
+		Source:      "",
+	}
+}
+
 // New creates a new configured version service.
 func New(config Config) (*Service, error) {
 	// Settings.

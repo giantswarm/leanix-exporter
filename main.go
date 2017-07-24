@@ -96,7 +96,7 @@ func main() {
 		}
 	}
 	daemonCommand := newCommand.DaemonCommand().CobraCommand()
-	daemonCommand.PersistentFlags().String(f.Excludes, "", "Namespace to exclude")
+	daemonCommand.PersistentFlags().String(f.Service.Excludes, "", "Namespace to exclude")
 
 	newCommand.CobraCommand().Execute()
 

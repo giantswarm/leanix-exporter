@@ -56,7 +56,6 @@ func (s *Service) Get(ctx context.Context) (*Response, error) {
 	// creates the clientset
 	clientset, err := kubernetes.NewForConfig(config)
 	if err != nil {
-		return nil, err
 	}
 
 	return &Response{

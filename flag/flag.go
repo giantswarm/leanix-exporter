@@ -1,9 +1,12 @@
 package flag
 
-import "github.com/giantswarm/microkit/flag"
+import (
+	"github.com/giantswarm/leanix-exporter/flag/service"
+	"github.com/giantswarm/microkit/flag"
+)
 
 type Flag struct {
-	Excludes string
+	Service service.Service
 }
 
 func New() *Flag {

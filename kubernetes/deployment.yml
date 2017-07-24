@@ -29,7 +29,6 @@ spec:
         - --server.listen.address=http://0.0.0.0:8000
         - --config.dirs=/var/run/leanix-exporter/configmap/
         - --config.files=config
-        - --config.files=secret
         imagePullPolicy: IfNotPresent
         volumeMounts:
         - name: leanix-exporter-configmap

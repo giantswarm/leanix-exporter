@@ -4,11 +4,12 @@ import (
 	"context"
 	"time"
 
-	microerror "github.com/giantswarm/microkit/error"
 	"k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
+
+	microerror "github.com/giantswarm/microkit/error"
 )
 
 type pod struct {

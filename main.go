@@ -5,13 +5,14 @@ import (
 	"os"
 	"time"
 
+	"github.com/spf13/viper"
+
 	"github.com/giantswarm/leanix-exporter/flag"
 	"github.com/giantswarm/leanix-exporter/server"
 	"github.com/giantswarm/leanix-exporter/service"
 	"github.com/giantswarm/microkit/command"
 	"github.com/giantswarm/microkit/logger"
 	microserver "github.com/giantswarm/microkit/server"
-	"github.com/spf13/viper"
 )
 
 var (

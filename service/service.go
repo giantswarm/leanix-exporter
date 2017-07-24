@@ -4,13 +4,13 @@ package service
 import (
 	"fmt"
 
-	microerror "github.com/giantswarm/microkit/error"
-	micrologger "github.com/giantswarm/microkit/logger"
+	"github.com/spf13/viper"
 
 	"github.com/giantswarm/leanix-exporter/flag"
 	"github.com/giantswarm/leanix-exporter/service/exporter"
 	"github.com/giantswarm/leanix-exporter/service/version"
-	"github.com/spf13/viper"
+	microerror "github.com/giantswarm/microkit/error"
+	micrologger "github.com/giantswarm/microkit/logger"
 )
 
 type Config struct {

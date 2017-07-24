@@ -1,12 +1,11 @@
 package endpoint
 
 import (
-	microerror "github.com/giantswarm/microkit/error"
-
 	"github.com/giantswarm/leanix-exporter/server/endpoint/exporter"
 	"github.com/giantswarm/leanix-exporter/server/endpoint/version"
 	"github.com/giantswarm/leanix-exporter/server/middleware"
 	"github.com/giantswarm/leanix-exporter/service"
+	microerror "github.com/giantswarm/microkit/error"
 	micrologger "github.com/giantswarm/microkit/logger"
 )
 

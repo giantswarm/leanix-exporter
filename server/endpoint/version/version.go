@@ -5,13 +5,13 @@ import (
 	"encoding/json"
 	"net/http"
 
-	microerror "github.com/giantswarm/microkit/error"
-	micrologger "github.com/giantswarm/microkit/logger"
 	kitendpoint "github.com/go-kit/kit/endpoint"
 	kithttp "github.com/go-kit/kit/transport/http"
 
 	"github.com/giantswarm/leanix-exporter/server/middleware"
 	"github.com/giantswarm/leanix-exporter/service"
+	microerror "github.com/giantswarm/microkit/error"
+	micrologger "github.com/giantswarm/microkit/logger"
 )
 
 const (

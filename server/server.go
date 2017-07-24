@@ -5,13 +5,14 @@ import (
 	"net/http"
 	"sync"
 
+	kithttp "github.com/go-kit/kit/transport/http"
+
 	"github.com/giantswarm/leanix-exporter/server/endpoint"
 	"github.com/giantswarm/leanix-exporter/server/middleware"
 	"github.com/giantswarm/leanix-exporter/service"
 	microerror "github.com/giantswarm/microkit/error"
 	micrologger "github.com/giantswarm/microkit/logger"
 	microserver "github.com/giantswarm/microkit/server"
-	kithttp "github.com/go-kit/kit/transport/http"
 )
 
 // Config represents the configuration used to create a new server object.

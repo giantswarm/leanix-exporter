@@ -21,18 +21,6 @@ type Config struct {
 func New(config Config) (*Endpoint, error) {
 	var err error
 
-	var versionEndpoint *version.Endpoint
-	{
-		versionConfig := version.DefaultConfig()
-		versionConfig.Logger = config.Logger
-		versionConfig.Middleware = config.Middleware
-		versionConfig.Service = config.Service
-		versionEndpoint, err = version.New(versionConfig)
-		if err != nil {
-			return nil, microerror.MaskAny(err)
-		}
-	}
-
 	var exporterEndpoint *exporter.Endpoint
 	{
 		exporterEndpoint, err = exporter.New(exporter.Config{
@@ -41,6 +29,18 @@ func New(config Config) (*Endpoint, error) {
 			Service:    config.Service,
 		})
 
+		if err != nil {
+			return nil, microerror.MaskAny(err)
+		}
+	}
+
+	var versionEndpoint *version.Endpoint
+	{
+		versionConfig := version.DefaultConfig()
+		versionConfig.Logger = config.Logger
+		versionConfig.Middleware = config.Middleware
+		versionConfig.Service = config.Service
+		versionEndpoint, err = version.New(versionConfig)
 		if err != nil {
 			return nil, microerror.MaskAny(err)
 		}

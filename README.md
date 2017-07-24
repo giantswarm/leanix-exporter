@@ -60,3 +60,25 @@ Extract Kubernetes Cluster data for different source and expose it is a simple f
   ],
   "LastUpdate": "2017-07-18T12:32:16.298303791Z"
 ```
+
+## Contact
+
+- Mailing list: [giantswarm](https://groups.google.com/forum/!forum/giantswarm)
+- IRC: #[giantswarm](irc://irc.freenode.org:6667/#giantswarm) on freenode.org
+- Bugs: [issues](https://github.com/giantswarm/leanix-exporter/issues)
+
+## Contributing & Reporting Bugs
+
+See [CONTRIBUTING](CONTRIBUTING.md) for details on submitting patches, the
+contribution workflow as well as reporting bugs.
+
+## License
+
+leanix-exporter is under the Apache 2.0 license. See the [LICENSE](LICENSE) file
+for details.
+
+## Credit
+- https://golang.org
+- https://github.com/giantswarm/microkit
+- https://github.com/kubernetes/client-go
+

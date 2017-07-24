@@ -57,7 +57,7 @@ type Service struct {
 func (s *Service) Get(ctx context.Context) (*Response, error) {
 	config, err := rest.InClusterConfig()
 	if err != nil {
-		return nil, err
+		return nil, microerror.MaskAny(err)
 	}
 	// creates the clientset
 	clientset, err := kubernetes.NewForConfig(config)

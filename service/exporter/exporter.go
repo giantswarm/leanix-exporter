@@ -49,7 +49,6 @@ type Service struct {
 }
 
 func (s *Service) Get(ctx context.Context) (*Response, error) {
-
 	config, err := rest.InClusterConfig()
 	if err != nil {
 		return nil, err

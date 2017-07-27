@@ -4,7 +4,7 @@ import (
 	"context"
 	"runtime"
 
-	microerror "github.com/giantswarm/microkit/error"
+	"github.com/giantswarm/microerror"
 )
 
 // Response is the return value of the service action.
@@ -38,16 +38,16 @@ func DefaultConfig() Config {
 func New(config Config) (*Service, error) {
 	// Settings.
 	if config.Description == "" {
-		return nil, microerror.MaskAnyf(invalidConfigError, "description commit must not be empty")
+		return nil, microerror.Maskf(invalidConfigError, "description commit must not be empty")
 	}
 	if config.GitCommit == "" {
-		return nil, microerror.MaskAnyf(invalidConfigError, "git commit must not be empty")
+		return nil, microerror.Maskf(invalidConfigError, "git commit must not be empty")
 	}
 	if config.Name == "" {
-		return nil, microerror.MaskAnyf(invalidConfigError, "name must not be empty")
+		return nil, microerror.Maskf(invalidConfigError, "name must not be empty")
 	}
 	if config.Source == "" {
-		return nil, microerror.MaskAnyf(invalidConfigError, "name must not be empty")
+		return nil, microerror.Maskf(invalidConfigError, "name must not be empty")
 	}
 
 	newService := &Service{

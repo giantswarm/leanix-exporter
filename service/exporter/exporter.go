@@ -9,7 +9,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 
-	microerror "github.com/giantswarm/microkit/error"
+	"github.com/giantswarm/microerror"
 )
 
 type pod struct {
@@ -40,7 +40,7 @@ func DefaultConfig() Config {
 func New(config Config) (*Service, error) {
 	// Settings.
 	if config.Excludes == nil {
-		return nil, microerror.MaskAnyf(invalidConfigError, "config.Excludes must not be empty")
+		return nil, microerror.Maskf(invalidConfigError, "config.Excludes must not be empty")
 	}
 	newService := &Service{
 		Config: config,
@@ -57,7 +57,7 @@ type Service struct {
 func (s *Service) Get(ctx context.Context) (*Response, error) {
 	config, err := rest.InClusterConfig()
 	if err != nil {
-		return nil, microerror.MaskAny(err)
+		return nil, microerror.Mask(err)
 	}
 	// creates the clientset
 	clientset, err := kubernetes.NewForConfig(config)

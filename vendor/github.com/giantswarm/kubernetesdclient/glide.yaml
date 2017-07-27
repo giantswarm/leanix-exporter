@@ -1,0 +1,6 @@
+package: github.com/giantswarm/kubernetesdclient
+import:
+- package: github.com/go-resty/resty
+  version: ~0.9.0
+- package: github.com/giantswarm/microkit
+  version: master

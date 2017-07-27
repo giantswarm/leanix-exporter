@@ -9,7 +9,7 @@ import (
 	"github.com/giantswarm/leanix-exporter/flag"
 	"github.com/giantswarm/leanix-exporter/service/exporter"
 	"github.com/giantswarm/leanix-exporter/service/version"
-	microerror "github.com/giantswarm/microkit/error"
+	"github.com/giantswarm/microerror"
 	micrologger "github.com/giantswarm/microkit/logger"
 )
 
@@ -48,16 +48,16 @@ func DefaultConfig() Config {
 func New(config Config) (*Service, error) {
 	// Dependencies.
 	if config.Logger == nil {
-		return nil, microerror.MaskAnyf(invalidConfigError, "config.Logger must not be empty")
+		return nil, microerror.Maskf(invalidConfigError, "config.Logger must not be empty")
 	}
 	config.Logger.Log("debug", fmt.Sprintf("creating cluster service with config: %#v", config))
 
 	// Settings.
 	if config.Flag == nil {
-		return nil, microerror.MaskAnyf(invalidConfigError, "config.Flag must not be empty")
+		return nil, microerror.Maskf(invalidConfigError, "config.Flag must not be empty")
 	}
 	if config.Viper == nil {
-		return nil, microerror.MaskAnyf(invalidConfigError, "config.Viper must not be empty")
+		return nil, microerror.Maskf(invalidConfigError, "config.Viper must not be empty")
 	}
 
 	var err error
@@ -68,7 +68,7 @@ func New(config Config) (*Service, error) {
 		exporterConfig.Excludes = config.Viper.GetStringSlice(config.Flag.Service.Excludes)
 		exporterService, err = exporter.New(exporterConfig)
 		if err != nil {
-			return nil, microerror.MaskAny(err)
+			return nil, microerror.Mask(err)
 		}
 	}
 
@@ -83,7 +83,7 @@ func New(config Config) (*Service, error) {
 
 		versionService, err = version.New(versionConfig)
 		if err != nil {
-			return nil, microerror.MaskAny(err)
+			return nil, microerror.Mask(err)
 		}
 	}
 

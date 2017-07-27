@@ -13,4 +13,6 @@ import:
   - service/updater
 - package: github.com/giantswarm/microkit
   version: master
+- package: github.com/giantswarm/microerror
+  version: master
 - package: github.com/evanphx/json-patch

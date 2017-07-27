@@ -5,7 +5,7 @@ import (
 	"github.com/giantswarm/leanix-exporter/server/endpoint/version"
 	"github.com/giantswarm/leanix-exporter/server/middleware"
 	"github.com/giantswarm/leanix-exporter/service"
-	microerror "github.com/giantswarm/microkit/error"
+	"github.com/giantswarm/microerror"
 	micrologger "github.com/giantswarm/microkit/logger"
 )
 
@@ -41,7 +41,7 @@ func New(config Config) (*Endpoint, error) {
 		})
 
 		if err != nil {
-			return nil, microerror.MaskAny(err)
+			return nil, microerror.Mask(err)
 		}
 	}
 
@@ -53,7 +53,7 @@ func New(config Config) (*Endpoint, error) {
 		versionConfig.Service = config.Service
 		versionEndpoint, err = version.New(versionConfig)
 		if err != nil {
-			return nil, microerror.MaskAny(err)
+			return nil, microerror.Mask(err)
 		}
 	}
 

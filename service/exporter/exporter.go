@@ -2,8 +2,10 @@ package exporter
 
 import (
 	"context"
+	"log"
 	"time"
 
+	"k8s.io/api/apps/v1beta1"
 	"k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
@@ -12,14 +14,19 @@ import (
 	"github.com/giantswarm/microerror"
 )
 
+type deployment struct {
+	Name   string
+	Status v1beta1.DeploymentStatus
+}
 type pod struct {
 	Name              string
 	Status            string
 	ContainerStatuses []v1.ContainerStatus
 }
 type namespace struct {
-	Name string
-	Pods []pod
+	Name        string
+	Pods        []pod
+	Deployments []deployment
 }
 type Response struct {
 	Namespaces []namespace
@@ -70,20 +77,40 @@ func (s *Service) Get(ctx context.Context) (*Response, error) {
 	}, nil
 }
 
+func getDeployments(c *kubernetes.Clientset, ns string) ([]deployment, error) {
+	depls, err := c.AppsV1beta1().Deployments(ns).List(metav1.ListOptions{})
+	if err != nil {
+		return []deployment{}, microerror.Mask(err)
+	}
+
+	s := []deployment{}
+	for _, d := range depls.Items {
+		s = append(s, deployment{
+			Name:   d.GetName(),
+			Status: d.Status,
+		})
+	}
+
+	return s, nil
+}
+
 func getNamespaces(c *kubernetes.Clientset, config Config) []namespace {
 	// creates the in-cluster config
 	ns, err := c.CoreV1().Namespaces().List(metav1.ListOptions{})
 	if err != nil {
 		panic(err.Error())
 	}
-
 	s := []namespace{}
 	for _, n := range ns.Items {
-
 		if !isExcluded(config.Excludes, n.Name) {
+			depls, err := getDeployments(c, n.Name)
+			if err != nil {
+				log.Println(err)
+			}
 			s = append(s, namespace{
-				Name: n.Name,
-				Pods: getPods(c, n.Name),
+				Name:        n.Name,
+				Pods:        getPods(c, n.Name),
+				Deployments: depls,
 			})
 		}
 	}

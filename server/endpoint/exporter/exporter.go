@@ -8,6 +8,7 @@ import (
 
 	kitendpoint "github.com/go-kit/kit/endpoint"
 	kithttp "github.com/go-kit/kit/transport/http"
+	"k8s.io/api/apps/v1beta1"
 	"k8s.io/api/core/v1"
 
 	"github.com/giantswarm/leanix-exporter/server/middleware"
@@ -33,14 +34,20 @@ type Config struct {
 	Service    *service.Service
 }
 
+type deployment struct {
+	Name   string
+	Status v1beta1.DeploymentStatus
+}
+
 type pod struct {
 	Name              string
 	Status            string
 	ContainerStatuses []v1.ContainerStatus
 }
 type namespace struct {
-	Name string
-	Pods []pod
+	Name        string
+	Pods        []pod
+	Deployments []deployment
 }
 type Response struct {
 	Namespaces []namespace
@@ -106,9 +113,12 @@ func (e *Endpoint) Endpoint() kitendpoint.Endpoint {
 		nss := []namespace{}
 
 		for _, ns := range serviceResponse.Namespaces {
-			n := namespace{Name: ns.Name, Pods: []pod{}}
+			n := namespace{Name: ns.Name, Pods: []pod{}, Deployments: []deployment{}}
 			for _, p := range ns.Pods {
 				n.Pods = append(n.Pods, pod(p))
+			}
+			for _, d := range ns.Deployments {
+				n.Deployments = append(n.Deployments, deployment(d))
 			}
 			nss = append(nss, n)
 		}

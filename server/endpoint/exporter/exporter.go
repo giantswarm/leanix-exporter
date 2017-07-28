@@ -8,9 +8,8 @@ import (
 
 	kitendpoint "github.com/go-kit/kit/endpoint"
 	kithttp "github.com/go-kit/kit/transport/http"
-	"k8s.io/api/apps/v1beta1"
-	"k8s.io/api/core/v1"
 
+	"github.com/giantswarm/leanix-exporter/server/endpoint/exporter/k8s"
 	"github.com/giantswarm/leanix-exporter/server/middleware"
 	"github.com/giantswarm/leanix-exporter/service"
 	"github.com/giantswarm/microerror"
@@ -34,23 +33,8 @@ type Config struct {
 	Service    *service.Service
 }
 
-type deployment struct {
-	Name   string
-	Status v1beta1.DeploymentStatus
-}
-
-type pod struct {
-	Name              string
-	Status            string
-	ContainerStatuses []v1.ContainerStatus
-}
-type namespace struct {
-	Name        string
-	Pods        []pod
-	Deployments []deployment
-}
 type Response struct {
-	Namespaces []namespace
+	Namespaces []k8s.Namespace
 	LastUpdate time.Time
 }
 
@@ -110,20 +94,8 @@ func (e *Endpoint) Endpoint() kitendpoint.Endpoint {
 			return nil, microerror.Mask(err)
 		}
 
-		nss := []namespace{}
-
-		for _, ns := range serviceResponse.Namespaces {
-			n := namespace{Name: ns.Name, Pods: []pod{}, Deployments: []deployment{}}
-			for _, p := range ns.Pods {
-				n.Pods = append(n.Pods, pod(p))
-			}
-			for _, d := range ns.Deployments {
-				n.Deployments = append(n.Deployments, deployment(d))
-			}
-			nss = append(nss, n)
-		}
 		r := Response{
-			Namespaces: nss,
+			Namespaces: k8s.FromServiceNamespaces(serviceResponse.Namespaces),
 			LastUpdate: serviceResponse.LastUpdate,
 		}
 

@@ -3,9 +3,12 @@ package k8s
 import (
 	"log"
 
-	"github.com/giantswarm/leanix-exporter/service/exporter/k8s"
 	"k8s.io/api/apps/v1beta1"
 	"k8s.io/api/core/v1"
+	v1b1 "k8s.io/api/extensions/v1beta1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/giantswarm/leanix-exporter/service/exporter/k8s"
 )
 
 type obj struct {
@@ -35,6 +38,21 @@ type Pod struct {
 	Status            string               `json:"status,omitempty"`
 	ContainerStatuses []v1.ContainerStatus `json:"container_statuses,omitempty"`
 }
+
+type PodTemplate struct {
+	obj           `json:"obj,omitempty"`
+	Containers    []v1.Container `json:"containers,omitempty"`
+	RestartPolicy string         `json:"restart_policy,omitempty"`
+	DNSPolicy     string         `json:"dns_policy,omitempty"`
+}
+
+type DaemonSet struct {
+	obj         `json:"obj,omitempty"`
+	Status      v1b1.DaemonSetStatus `json:"status,omitempty"`
+	PodTemplate PodTemplate          `json:"pod_template,omitempty"`
+	Selector    metav1.LabelSelector `json:"selector,omitempty"`
+}
+
 type Namespace struct {
 	obj
 
@@ -42,6 +60,7 @@ type Namespace struct {
 	Pods        []Pod        `json:"pods,omitempty"`
 	Deployments []Deployment `json:"deployments,omitempty"`
 	Services    []Service    `json:"services,omitempty"`
+	DaemonSets  []DaemonSet  `json:"daemon_sets,omitempty"`
 }
 
 func FromServiceNamespaces(o []k8s.Namespace) []Namespace {
@@ -56,6 +75,7 @@ func FromServiceNamespaces(o []k8s.Namespace) []Namespace {
 			Pods:        fromServicePods(p.Pods),
 			Deployments: fromServiceDeployments(p.Deployments),
 			Services:    fromServiceServices(p.Services),
+			DaemonSets:  fromServiceDaemonSets(p.DaemonSet),
 		})
 	}
 
@@ -104,4 +124,30 @@ func fromServiceServices(o []k8s.Service) []Service {
 		})
 	}
 	return ps
+}
+
+func fromServiceDaemonSets(o []k8s.DaemonSet) []DaemonSet {
+	ps := []DaemonSet{}
+	for _, p := range o {
+		ps = append(ps, DaemonSet{
+			obj: obj{
+				Labels: p.Labels,
+			},
+			Status:      p.Status,
+			Selector:    p.Selector,
+			PodTemplate: fromServicePodTemplate(p.PodTemplate),
+		})
+	}
+	return ps
+}
+
+func fromServicePodTemplate(o k8s.PodTemplate) PodTemplate {
+	return PodTemplate{
+		obj: obj{
+			Labels: o.Labels,
+		},
+		Containers:    o.Containers,
+		DNSPolicy:     o.DNSPolicy,
+		RestartPolicy: o.RestartPolicy,
+	}
 }

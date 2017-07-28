@@ -5,6 +5,7 @@ import (
 
 	"k8s.io/api/apps/v1beta1"
 	"k8s.io/api/core/v1"
+	v1b1 "k8s.io/api/extensions/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 
@@ -35,17 +36,33 @@ type Pod struct {
 	Status            string
 	ContainerStatuses []v1.ContainerStatus
 }
+
+type PodTemplate struct {
+	obj
+	Containers    []v1.Container
+	RestartPolicy string
+	DNSPolicy     string
+}
+
+type DaemonSet struct {
+	obj
+	Status      v1b1.DaemonSetStatus
+	PodTemplate PodTemplate
+	Selector    metav1.LabelSelector
+}
+
 type Namespace struct {
 	obj
 	Name        string
 	Pods        []Pod
 	Deployments []Deployment
 	Services    []Service
+	DaemonSet   []DaemonSet
 }
 
 func GetNamespaces(c *kubernetes.Clientset, excludes []string) []Namespace {
 	// creates the in-cluster config
-	ns, err := c.CoreV1().Namespaces().List(metav1.ListOptions{})
+	ns, err := c.Namespaces().List(metav1.ListOptions{})
 	if err != nil {
 		panic(err.Error())
 	}
@@ -61,14 +78,20 @@ func GetNamespaces(c *kubernetes.Clientset, excludes []string) []Namespace {
 			if err != nil {
 				log.Println(err)
 			}
+
+			dss, err := getDaemonSets(c, n.Name)
+			if err != nil {
+				log.Println(err)
+			}
 			s = append(s, Namespace{
+				obj: obj{
+					Labels: n.Labels,
+				},
 				Name:        n.Name,
 				Pods:        getPods(c, n.Name),
 				Deployments: depls,
 				Services:    svcs,
-				obj: obj{
-					Labels: n.Labels,
-				},
+				DaemonSet:   dss,
 			})
 		}
 	}
@@ -98,14 +121,13 @@ func getDeployments(c *kubernetes.Clientset, ns string) ([]Deployment, error) {
 
 func getPods(c *kubernetes.Clientset, ns string) []Pod {
 	// creates the in-cluster config
-	pods, err := c.CoreV1().Pods(ns).List(metav1.ListOptions{})
+	pods, err := c.Pods(ns).List(metav1.ListOptions{})
 	if err != nil {
 		panic(err.Error())
 	}
 
 	ps := []Pod{}
 	for _, p := range pods.Items {
-
 		ps = append(ps, Pod{
 			Name:              p.Name,
 			Status:            string(p.Status.Phase),
@@ -119,7 +141,7 @@ func getPods(c *kubernetes.Clientset, ns string) []Pod {
 }
 
 func getServices(c *kubernetes.Clientset, ns string) ([]Service, error) {
-	services, err := c.CoreV1().Services(ns).List(metav1.ListOptions{})
+	services, err := c.Services(ns).List(metav1.ListOptions{})
 	if err != nil {
 		return []Service{}, microerror.Mask(err)
 	}
@@ -137,6 +159,35 @@ func getServices(c *kubernetes.Clientset, ns string) ([]Service, error) {
 		})
 	}
 	return ss, nil
+}
+
+func getDaemonSets(c *kubernetes.Clientset, ns string) ([]DaemonSet, error) {
+	dss, err := c.DaemonSets(ns).List(metav1.ListOptions{})
+
+	if err != nil {
+		return []DaemonSet{}, microerror.Mask(err)
+	}
+
+	ds := []DaemonSet{}
+	for _, s := range dss.Items {
+
+		ds = append(ds, DaemonSet{
+			obj: obj{
+				Labels: s.Labels,
+			},
+			Status:   s.Status,
+			Selector: *s.Spec.Selector,
+			PodTemplate: PodTemplate{
+				obj: obj{
+					Labels: s.Labels,
+				},
+				Containers:    s.Spec.Template.Spec.Containers,
+				RestartPolicy: string(s.Spec.Template.Spec.RestartPolicy),
+				DNSPolicy:     string(s.Spec.Template.Spec.DNSPolicy),
+			},
+		})
+	}
+	return ds, nil
 }
 
 func isExcluded(excludes []string, ns string) bool {

@@ -9,6 +9,7 @@ import (
 
 	"github.com/giantswarm/leanix-exporter/service/exporter/k8s"
 	"github.com/giantswarm/microerror"
+	micrologger "github.com/giantswarm/microkit/logger"
 )
 
 type Response struct {
@@ -17,12 +18,14 @@ type Response struct {
 }
 
 type Config struct {
+	Logger   micrologger.Logger
 	Excludes []string
 }
 
 func DefaultConfig() Config {
 	return Config{
 		Excludes: []string{},
+		Logger:   nil,
 	}
 }
 
@@ -55,7 +58,7 @@ func (s *Service) Get(ctx context.Context) (*Response, error) {
 	}
 
 	return &Response{
-		Namespaces: k8s.GetNamespaces(clientset, s.Config.Excludes),
+		Namespaces: k8s.GetNamespaces(clientset, s.Config.Excludes, s.Config.Logger),
 		LastUpdate: time.Now(),
 	}, nil
 }

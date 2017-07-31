@@ -1,8 +1,6 @@
 package k8s
 
 import (
-	"log"
-
 	"k8s.io/api/apps/v1beta1"
 	"k8s.io/api/batch/v2alpha1"
 	"k8s.io/api/core/v1"
@@ -85,35 +83,43 @@ type Ingress struct {
 	Status   v1b1.IngressStatus  `json:"status,omitempty"`
 }
 
+type NetworkPolicy struct {
+	metadata     `json:"metadata,omitempty"`
+	Name         string                          `json:"name,omitempty"`
+	IngressRules []v1b1.NetworkPolicyIngressRule `json:"ingress_rules,omitempty"`
+	Selector     metav1.LabelSelector            `json:"selector,omitempty"`
+}
+
 type Namespace struct {
 	metadata `json:"metadata,omitempty"`
 
-	Name         string        `json:"name,omitempty"`
-	Pods         []Pod         `json:"pods,omitempty"`
-	Deployments  []Deployment  `json:"deployments,omitempty"`
-	Services     []Service     `json:"services,omitempty"`
-	DaemonSets   []DaemonSet   `json:"daemon_sets,omitempty"`
-	StatefulSets []StatefulSet `json:"stateful_sets,omitempty"`
-	CronJobs     []CronJob     `json:"cron_jobs,omitempty"`
-	Ingresses    []Ingress     `json:"ingresses,omitempty"`
+	Name            string          `json:"name,omitempty"`
+	Pods            []Pod           `json:"pods,omitempty"`
+	Deployments     []Deployment    `json:"deployments,omitempty"`
+	Services        []Service       `json:"services,omitempty"`
+	DaemonSets      []DaemonSet     `json:"daemon_sets,omitempty"`
+	StatefulSets    []StatefulSet   `json:"stateful_sets,omitempty"`
+	CronJobs        []CronJob       `json:"cron_jobs,omitempty"`
+	Ingresses       []Ingress       `json:"ingresses,omitempty"`
+	NetworkPolicies []NetworkPolicy `json:"network_policies,omitempty"`
 }
 
 func FromServiceNamespaces(o []k8s.Namespace) []Namespace {
 	ps := []Namespace{}
 	for _, p := range o {
-		log.Println(p.Labels)
 		ps = append(ps, Namespace{
 			metadata: metadata{
 				Labels: p.Labels,
 			},
-			Name:         p.Name,
-			Pods:         fromServicePods(p.Pods),
-			Deployments:  fromServiceDeployments(p.Deployments),
-			Services:     fromServiceServices(p.Services),
-			DaemonSets:   fromServiceDaemonSets(p.DaemonSet),
-			StatefulSets: fromServiceStatefulSets(p.StatefulSets),
-			CronJobs:     fromServiceCronJobs(p.CronJobs),
-			Ingresses:    fromServiceIngresses(p.Ingresses),
+			Name:            p.Name,
+			Pods:            fromServicePods(p.Pods),
+			Deployments:     fromServiceDeployments(p.Deployments),
+			Services:        fromServiceServices(p.Services),
+			DaemonSets:      fromServiceDaemonSets(p.DaemonSet),
+			StatefulSets:    fromServiceStatefulSets(p.StatefulSets),
+			CronJobs:        fromServiceCronJobs(p.CronJobs),
+			Ingresses:       fromServiceIngresses(p.Ingresses),
+			NetworkPolicies: fromServiceNetworkPolicies(p.NetworkPolicies),
 		})
 	}
 
@@ -235,6 +241,21 @@ func fromServiceIngresses(o []k8s.Ingress) []Ingress {
 			Backends: p.Backends,
 			Rules:    p.Rules,
 			TLSHosts: p.TLSHosts,
+		})
+	}
+	return ps
+}
+
+func fromServiceNetworkPolicies(o []k8s.NetworkPolicy) []NetworkPolicy {
+	ps := []NetworkPolicy{}
+	for _, p := range o {
+		ps = append(ps, NetworkPolicy{
+			metadata: metadata{
+				Labels: p.Labels,
+			},
+			Name:         p.Name,
+			IngressRules: p.IngressRules,
+			Selector:     p.Selector,
 		})
 	}
 	return ps

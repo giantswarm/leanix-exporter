@@ -77,6 +77,14 @@ type JobTemplate struct {
 	PodTemplate PodTemplate `json:"pod_template,omitempty"`
 }
 
+type Ingress struct {
+	metadata `json:"metadata,omitempty"`
+	Backends v1b1.IngressBackend `json:"backends,omitempty"`
+	Rules    []v1b1.IngressRule  `json:"rules,omitempty"`
+	TLSHosts []v1b1.IngressTLS   `json:"tls_hosts,omitempty"`
+	Status   v1b1.IngressStatus  `json:"status,omitempty"`
+}
+
 type Namespace struct {
 	metadata `json:"metadata,omitempty"`
 
@@ -87,6 +95,7 @@ type Namespace struct {
 	DaemonSets   []DaemonSet   `json:"daemon_sets,omitempty"`
 	StatefulSets []StatefulSet `json:"stateful_sets,omitempty"`
 	CronJobs     []CronJob     `json:"cron_jobs,omitempty"`
+	Ingresses    []Ingress     `json:"ingresses,omitempty"`
 }
 
 func FromServiceNamespaces(o []k8s.Namespace) []Namespace {
@@ -104,6 +113,7 @@ func FromServiceNamespaces(o []k8s.Namespace) []Namespace {
 			DaemonSets:   fromServiceDaemonSets(p.DaemonSet),
 			StatefulSets: fromServiceStatefulSets(p.StatefulSets),
 			CronJobs:     fromServiceCronJobs(p.CronJobs),
+			Ingresses:    fromServiceIngresses(p.Ingresses),
 		})
 	}
 
@@ -209,6 +219,22 @@ func fromServiceCronJobs(o []k8s.CronJob) []CronJob {
 			Status:      p.Status,
 			Suspend:     p.Suspend,
 			JobTemplate: fromServiceJobTemplate(p.JobTemplate),
+		})
+	}
+	return ps
+}
+
+func fromServiceIngresses(o []k8s.Ingress) []Ingress {
+	ps := []Ingress{}
+	for _, p := range o {
+		ps = append(ps, Ingress{
+			metadata: metadata{
+				Labels: p.Labels,
+			},
+			Status:   p.Status,
+			Backends: p.Backends,
+			Rules:    p.Rules,
+			TLSHosts: p.TLSHosts,
 		})
 	}
 	return ps

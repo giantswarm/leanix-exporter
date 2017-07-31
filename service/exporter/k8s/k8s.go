@@ -84,6 +84,7 @@ type Namespace struct {
 	DaemonSet    []DaemonSet
 	StatefulSets []StatefulSet
 	CronJobs     []CronJob
+	Ingresses    []Ingress
 }
 
 func GetNamespaces(c *kubernetes.Clientset, excludes []string) []Namespace {
@@ -119,6 +120,11 @@ func GetNamespaces(c *kubernetes.Clientset, excludes []string) []Namespace {
 				log.Println(err)
 			}
 
+			is, err := getIngresses(c, n.Name)
+			if err != nil {
+				log.Println(err)
+			}
+
 			s = append(s, Namespace{
 				metadata: metadata{
 					Labels: n.Labels,
@@ -130,6 +136,7 @@ func GetNamespaces(c *kubernetes.Clientset, excludes []string) []Namespace {
 				DaemonSet:    dss,
 				StatefulSets: sss,
 				CronJobs:     cjs,
+				Ingresses:    is,
 			})
 		}
 	}
@@ -271,6 +278,43 @@ func getCronJobs(c *kubernetes.Clientset, ns string) ([]CronJob, error) {
 	return cj, nil
 }
 
+type Ingress struct {
+	metadata
+	Backends v1b1.IngressBackend
+	Rules    []v1b1.IngressRule
+	TLSHosts []v1b1.IngressTLS
+	Status   v1b1.IngressStatus
+}
+
+func getIngresses(c *kubernetes.Clientset, ns string) ([]Ingress, error) {
+	is := []Ingress{}
+	ingresses, err := c.ExtensionsV1beta1().Ingresses(ns).List(metav1.ListOptions{})
+
+	if err != nil {
+		return is, microerror.Mask(err)
+	}
+	for _, i := range ingresses.Items {
+		is = append(is, Ingress{
+			metadata: metadata{
+				Labels: i.Labels,
+			},
+			Status:   i.Status,
+			Backends: MustBackend(i.Spec.Backend),
+			Rules:    i.Spec.Rules,
+			TLSHosts: i.Spec.TLS,
+		})
+	}
+
+	return is, nil
+}
+
+func MustBackend(b *v1b1.IngressBackend) v1b1.IngressBackend {
+	if b == nil {
+		return v1b1.IngressBackend{}
+	}
+
+	return *b
+}
 func fromPodTemplateSpec(pst v1.PodTemplateSpec) PodTemplate {
 	return PodTemplate{
 		metadata: metadata{

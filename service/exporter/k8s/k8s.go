@@ -4,6 +4,7 @@ import (
 	"log"
 
 	"k8s.io/api/apps/v1beta1"
+	"k8s.io/api/batch/v2alpha1"
 	"k8s.io/api/core/v1"
 	v1b1 "k8s.io/api/extensions/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -51,6 +52,29 @@ type DaemonSet struct {
 	Selector    metav1.LabelSelector
 }
 
+type StatefulSet struct {
+	metadata
+	ServiceName string
+	Replicas    int32
+	PodTemplate PodTemplate
+	Selector    metav1.LabelSelector
+	Status      v1beta1.StatefulSetStatus
+}
+
+type CronJob struct {
+	metadata
+	Name        string
+	Schedule    string
+	Status      v2alpha1.CronJobStatus
+	Suspend     bool
+	JobTemplate JobTemplate
+}
+
+type JobTemplate struct {
+	metadata
+	PodTemplate PodTemplate
+}
+
 type Namespace struct {
 	metadata
 	Name         string
@@ -59,6 +83,7 @@ type Namespace struct {
 	Services     []Service
 	DaemonSet    []DaemonSet
 	StatefulSets []StatefulSet
+	CronJobs     []CronJob
 }
 
 func GetNamespaces(c *kubernetes.Clientset, excludes []string) []Namespace {
@@ -89,6 +114,10 @@ func GetNamespaces(c *kubernetes.Clientset, excludes []string) []Namespace {
 			if err != nil {
 				log.Println(err)
 			}
+			cjs, err := getCronJobs(c, n.Name)
+			if err != nil {
+				log.Println(err)
+			}
 
 			s = append(s, Namespace{
 				metadata: metadata{
@@ -100,6 +129,7 @@ func GetNamespaces(c *kubernetes.Clientset, excludes []string) []Namespace {
 				Services:     svcs,
 				DaemonSet:    dss,
 				StatefulSets: sss,
+				CronJobs:     cjs,
 			})
 		}
 	}
@@ -191,26 +221,6 @@ func getDaemonSets(c *kubernetes.Clientset, ns string) ([]DaemonSet, error) {
 	return ds, nil
 }
 
-func fromPodTemplateSpec(pst v1.PodTemplateSpec) PodTemplate {
-	return PodTemplate{
-		metadata: metadata{
-			Labels: pst.Labels,
-		},
-		Containers:    pst.Spec.Containers,
-		RestartPolicy: string(pst.Spec.RestartPolicy),
-		DNSPolicy:     string(pst.Spec.DNSPolicy),
-	}
-}
-
-type StatefulSet struct {
-	metadata
-	ServiceName string
-	Replicas    int32
-	PodTemplate PodTemplate
-	Selector    metav1.LabelSelector
-	Status      v1beta1.StatefulSetStatus
-}
-
 func getStatefulSets(c *kubernetes.Clientset, ns string) ([]StatefulSet, error) {
 
 	ss := []StatefulSet{}
@@ -235,6 +245,50 @@ func getStatefulSets(c *kubernetes.Clientset, ns string) ([]StatefulSet, error) 
 	}
 
 	return ss, nil
+}
+
+func getCronJobs(c *kubernetes.Clientset, ns string) ([]CronJob, error) {
+
+	cj := []CronJob{}
+	cronjobs, err := c.BatchV2alpha1().CronJobs(ns).List(metav1.ListOptions{})
+
+	if err != nil {
+		return cj, microerror.Mask(err)
+	}
+
+	for _, s := range cronjobs.Items {
+		cj = append(cj, CronJob{
+			metadata: metadata{
+				Labels: s.Labels,
+			},
+			Name:        s.GetName(),
+			Schedule:    s.Spec.Schedule,
+			Status:      s.Status,
+			Suspend:     *s.Spec.Suspend,
+			JobTemplate: fromJobTemplateSpec(s.Spec.JobTemplate),
+		})
+	}
+	return cj, nil
+}
+
+func fromPodTemplateSpec(pst v1.PodTemplateSpec) PodTemplate {
+	return PodTemplate{
+		metadata: metadata{
+			Labels: pst.Labels,
+		},
+		Containers:    pst.Spec.Containers,
+		RestartPolicy: string(pst.Spec.RestartPolicy),
+		DNSPolicy:     string(pst.Spec.DNSPolicy),
+	}
+}
+
+func fromJobTemplateSpec(pst v2alpha1.JobTemplateSpec) JobTemplate {
+	return JobTemplate{
+		metadata: metadata{
+			Labels: pst.Labels,
+		},
+		PodTemplate: fromPodTemplateSpec(pst.Spec.Template),
+	}
 }
 
 func isExcluded(excludes []string, ns string) bool {

@@ -4,6 +4,7 @@ import (
 	"log"
 
 	"k8s.io/api/apps/v1beta1"
+	"k8s.io/api/batch/v2alpha1"
 	"k8s.io/api/core/v1"
 	v1b1 "k8s.io/api/extensions/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -62,6 +63,20 @@ type StatefulSet struct {
 	Status      v1beta1.StatefulSetStatus `json:"status,omitempty"`
 }
 
+type CronJob struct {
+	metadata    `json:"metadata,omitempty"`
+	Name        string                 `json:"name,omitempty"`
+	Schedule    string                 `json:"schedule,omitempty"`
+	Status      v2alpha1.CronJobStatus `json:"status,omitempty"`
+	Suspend     bool                   `json:"suspend,omitempty"`
+	JobTemplate JobTemplate            `json:"job_template,omitempty"`
+}
+
+type JobTemplate struct {
+	metadata    `json:"metadata,omitempty"`
+	PodTemplate PodTemplate `json:"pod_template,omitempty"`
+}
+
 type Namespace struct {
 	metadata `json:"metadata,omitempty"`
 
@@ -71,6 +86,7 @@ type Namespace struct {
 	Services     []Service     `json:"services,omitempty"`
 	DaemonSets   []DaemonSet   `json:"daemon_sets,omitempty"`
 	StatefulSets []StatefulSet `json:"stateful_sets,omitempty"`
+	CronJobs     []CronJob     `json:"cron_jobs,omitempty"`
 }
 
 func FromServiceNamespaces(o []k8s.Namespace) []Namespace {
@@ -87,6 +103,7 @@ func FromServiceNamespaces(o []k8s.Namespace) []Namespace {
 			Services:     fromServiceServices(p.Services),
 			DaemonSets:   fromServiceDaemonSets(p.DaemonSet),
 			StatefulSets: fromServiceStatefulSets(p.StatefulSets),
+			CronJobs:     fromServiceCronJobs(p.CronJobs),
 		})
 	}
 
@@ -178,4 +195,30 @@ func fromServiceStatefulSets(o []k8s.StatefulSet) []StatefulSet {
 		})
 	}
 	return ps
+}
+
+func fromServiceCronJobs(o []k8s.CronJob) []CronJob {
+	ps := []CronJob{}
+	for _, p := range o {
+		ps = append(ps, CronJob{
+			metadata: metadata{
+				Labels: p.Labels,
+			},
+			Name:        p.Name,
+			Schedule:    p.Schedule,
+			Status:      p.Status,
+			Suspend:     p.Suspend,
+			JobTemplate: fromServiceJobTemplate(p.JobTemplate),
+		})
+	}
+	return ps
+}
+
+func fromServiceJobTemplate(o k8s.JobTemplate) JobTemplate {
+	return JobTemplate{
+		metadata: metadata{
+			Labels: o.Labels,
+		},
+		PodTemplate: fromServicePodTemplate(o.PodTemplate),
+	}
 }

@@ -12,12 +12,12 @@ import (
 	"github.com/giantswarm/microerror"
 )
 
-type obj struct {
+type metadata struct {
 	Labels map[string]string
 }
 
 type Service struct {
-	obj
+	metadata
 	Name     string
 	Ports    []v1.ServicePort
 	Type     v1.ServiceType
@@ -25,39 +25,40 @@ type Service struct {
 }
 
 type Deployment struct {
-	obj
+	metadata
 	Name   string
 	Status v1beta1.DeploymentStatus
 }
 
 type Pod struct {
-	obj
+	metadata
 	Name              string
 	Status            string
 	ContainerStatuses []v1.ContainerStatus
 }
 
 type PodTemplate struct {
-	obj
+	metadata
 	Containers    []v1.Container
 	RestartPolicy string
 	DNSPolicy     string
 }
 
 type DaemonSet struct {
-	obj
+	metadata
 	Status      v1b1.DaemonSetStatus
 	PodTemplate PodTemplate
 	Selector    metav1.LabelSelector
 }
 
 type Namespace struct {
-	obj
-	Name        string
-	Pods        []Pod
-	Deployments []Deployment
-	Services    []Service
-	DaemonSet   []DaemonSet
+	metadata
+	Name         string
+	Pods         []Pod
+	Deployments  []Deployment
+	Services     []Service
+	DaemonSet    []DaemonSet
+	StatefulSets []StatefulSet
 }
 
 func GetNamespaces(c *kubernetes.Clientset, excludes []string) []Namespace {
@@ -83,15 +84,22 @@ func GetNamespaces(c *kubernetes.Clientset, excludes []string) []Namespace {
 			if err != nil {
 				log.Println(err)
 			}
+
+			sss, err := getStatefulSets(c, n.Name)
+			if err != nil {
+				log.Println(err)
+			}
+
 			s = append(s, Namespace{
-				obj: obj{
+				metadata: metadata{
 					Labels: n.Labels,
 				},
-				Name:        n.Name,
-				Pods:        getPods(c, n.Name),
-				Deployments: depls,
-				Services:    svcs,
-				DaemonSet:   dss,
+				Name:         n.Name,
+				Pods:         getPods(c, n.Name),
+				Deployments:  depls,
+				Services:     svcs,
+				DaemonSet:    dss,
+				StatefulSets: sss,
 			})
 		}
 	}
@@ -110,7 +118,7 @@ func getDeployments(c *kubernetes.Clientset, ns string) ([]Deployment, error) {
 		s = append(s, Deployment{
 			Name:   d.GetName(),
 			Status: d.Status,
-			obj: obj{
+			metadata: metadata{
 				Labels: d.Labels,
 			},
 		})
@@ -132,7 +140,7 @@ func getPods(c *kubernetes.Clientset, ns string) []Pod {
 			Name:              p.Name,
 			Status:            string(p.Status.Phase),
 			ContainerStatuses: p.Status.ContainerStatuses,
-			obj: obj{
+			metadata: metadata{
 				Labels: p.Labels,
 			},
 		})
@@ -153,7 +161,7 @@ func getServices(c *kubernetes.Clientset, ns string) ([]Service, error) {
 			Ports:    s.Spec.Ports,
 			Type:     s.Spec.Type,
 			Selector: s.Spec.Selector,
-			obj: obj{
+			metadata: metadata{
 				Labels: s.Labels,
 			},
 		})
@@ -172,22 +180,61 @@ func getDaemonSets(c *kubernetes.Clientset, ns string) ([]DaemonSet, error) {
 	for _, s := range dss.Items {
 
 		ds = append(ds, DaemonSet{
-			obj: obj{
+			metadata: metadata{
 				Labels: s.Labels,
 			},
-			Status:   s.Status,
-			Selector: *s.Spec.Selector,
-			PodTemplate: PodTemplate{
-				obj: obj{
-					Labels: s.Labels,
-				},
-				Containers:    s.Spec.Template.Spec.Containers,
-				RestartPolicy: string(s.Spec.Template.Spec.RestartPolicy),
-				DNSPolicy:     string(s.Spec.Template.Spec.DNSPolicy),
-			},
+			Status:      s.Status,
+			Selector:    *s.Spec.Selector,
+			PodTemplate: fromPodTemplateSpec(s.Spec.Template),
 		})
 	}
 	return ds, nil
+}
+
+func fromPodTemplateSpec(pst v1.PodTemplateSpec) PodTemplate {
+	return PodTemplate{
+		metadata: metadata{
+			Labels: pst.Labels,
+		},
+		Containers:    pst.Spec.Containers,
+		RestartPolicy: string(pst.Spec.RestartPolicy),
+		DNSPolicy:     string(pst.Spec.DNSPolicy),
+	}
+}
+
+type StatefulSet struct {
+	metadata
+	ServiceName string
+	Replicas    int32
+	PodTemplate PodTemplate
+	Selector    metav1.LabelSelector
+	Status      v1beta1.StatefulSetStatus
+}
+
+func getStatefulSets(c *kubernetes.Clientset, ns string) ([]StatefulSet, error) {
+
+	ss := []StatefulSet{}
+	statefulSets, err := c.AppsV1beta1().StatefulSets(ns).List(metav1.ListOptions{})
+
+	if err != nil {
+		return ss, microerror.Mask(err)
+	}
+
+	for _, s := range statefulSets.Items {
+
+		ss = append(ss, StatefulSet{
+			metadata: metadata{
+				Labels: s.Labels,
+			},
+			ServiceName: s.Spec.ServiceName,
+			Replicas:    *s.Spec.Replicas,
+			PodTemplate: fromPodTemplateSpec(s.Spec.Template),
+			Selector:    *s.Spec.Selector,
+			Status:      s.Status,
+		})
+	}
+
+	return ss, nil
 }
 
 func isExcluded(excludes []string, ns string) bool {

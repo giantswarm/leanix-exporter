@@ -11,12 +11,12 @@ import (
 	"github.com/giantswarm/leanix-exporter/service/exporter/k8s"
 )
 
-type obj struct {
+type metadata struct {
 	Labels map[string]string `json:"labels,omitempty"`
 }
 
 type Service struct {
-	obj
+	metadata `json:"metadata,omitempty"`
 
 	Name     string            `json:"name,omitempty"`
 	Ports    []v1.ServicePort  `json:"ports,omitempty"`
@@ -25,14 +25,14 @@ type Service struct {
 }
 
 type Deployment struct {
-	obj
+	metadata `json:"metadata,omitempty"`
 
 	Name   string                   `json:"name,omitempty"`
 	Status v1beta1.DeploymentStatus `json:"status,omitempty"`
 }
 
 type Pod struct {
-	obj
+	metadata `json:"metadata,omitempty"`
 
 	Name              string               `json:"name,omitempty"`
 	Status            string               `json:"status,omitempty"`
@@ -40,27 +40,37 @@ type Pod struct {
 }
 
 type PodTemplate struct {
-	obj           `json:"obj,omitempty"`
+	metadata      `json:"metadata,omitempty"`
 	Containers    []v1.Container `json:"containers,omitempty"`
 	RestartPolicy string         `json:"restart_policy,omitempty"`
 	DNSPolicy     string         `json:"dns_policy,omitempty"`
 }
 
 type DaemonSet struct {
-	obj         `json:"obj,omitempty"`
+	metadata    `json:"metadata,omitempty"`
 	Status      v1b1.DaemonSetStatus `json:"status,omitempty"`
 	PodTemplate PodTemplate          `json:"pod_template,omitempty"`
 	Selector    metav1.LabelSelector `json:"selector,omitempty"`
 }
 
-type Namespace struct {
-	obj
+type StatefulSet struct {
+	metadata    `json:"metadata,omitempty"`
+	ServiceName string                    `json:"service_name,omitempty"`
+	Replicas    int32                     `json:"replicas,omitempty"`
+	PodTemplate PodTemplate               `json:"pod_template,omitempty"`
+	Selector    metav1.LabelSelector      `json:"selector,omitempty"`
+	Status      v1beta1.StatefulSetStatus `json:"status,omitempty"`
+}
 
-	Name        string       `json:"name,omitempty"`
-	Pods        []Pod        `json:"pods,omitempty"`
-	Deployments []Deployment `json:"deployments,omitempty"`
-	Services    []Service    `json:"services,omitempty"`
-	DaemonSets  []DaemonSet  `json:"daemon_sets,omitempty"`
+type Namespace struct {
+	metadata `json:"metadata,omitempty"`
+
+	Name         string        `json:"name,omitempty"`
+	Pods         []Pod         `json:"pods,omitempty"`
+	Deployments  []Deployment  `json:"deployments,omitempty"`
+	Services     []Service     `json:"services,omitempty"`
+	DaemonSets   []DaemonSet   `json:"daemon_sets,omitempty"`
+	StatefulSets []StatefulSet `json:"stateful_sets,omitempty"`
 }
 
 func FromServiceNamespaces(o []k8s.Namespace) []Namespace {
@@ -68,14 +78,15 @@ func FromServiceNamespaces(o []k8s.Namespace) []Namespace {
 	for _, p := range o {
 		log.Println(p.Labels)
 		ps = append(ps, Namespace{
-			obj: obj{
+			metadata: metadata{
 				Labels: p.Labels,
 			},
-			Name:        p.Name,
-			Pods:        fromServicePods(p.Pods),
-			Deployments: fromServiceDeployments(p.Deployments),
-			Services:    fromServiceServices(p.Services),
-			DaemonSets:  fromServiceDaemonSets(p.DaemonSet),
+			Name:         p.Name,
+			Pods:         fromServicePods(p.Pods),
+			Deployments:  fromServiceDeployments(p.Deployments),
+			Services:     fromServiceServices(p.Services),
+			DaemonSets:   fromServiceDaemonSets(p.DaemonSet),
+			StatefulSets: fromServiceStatefulSets(p.StatefulSets),
 		})
 	}
 
@@ -86,7 +97,7 @@ func fromServicePods(o []k8s.Pod) []Pod {
 	ps := []Pod{}
 	for _, p := range o {
 		ps = append(ps, Pod{
-			obj: obj{
+			metadata: metadata{
 				Labels: p.Labels,
 			},
 			Name:              p.Name,
@@ -101,7 +112,7 @@ func fromServiceDeployments(o []k8s.Deployment) []Deployment {
 	ps := []Deployment{}
 	for _, p := range o {
 		ps = append(ps, Deployment{
-			obj: obj{
+			metadata: metadata{
 				Labels: p.Labels,
 			},
 			Name:   p.Name,
@@ -114,7 +125,7 @@ func fromServiceServices(o []k8s.Service) []Service {
 	ps := []Service{}
 	for _, p := range o {
 		ps = append(ps, Service{
-			obj: obj{
+			metadata: metadata{
 				Labels: p.Labels,
 			},
 			Name:     p.Name,
@@ -130,7 +141,7 @@ func fromServiceDaemonSets(o []k8s.DaemonSet) []DaemonSet {
 	ps := []DaemonSet{}
 	for _, p := range o {
 		ps = append(ps, DaemonSet{
-			obj: obj{
+			metadata: metadata{
 				Labels: p.Labels,
 			},
 			Status:      p.Status,
@@ -143,11 +154,28 @@ func fromServiceDaemonSets(o []k8s.DaemonSet) []DaemonSet {
 
 func fromServicePodTemplate(o k8s.PodTemplate) PodTemplate {
 	return PodTemplate{
-		obj: obj{
+		metadata: metadata{
 			Labels: o.Labels,
 		},
 		Containers:    o.Containers,
 		DNSPolicy:     o.DNSPolicy,
 		RestartPolicy: o.RestartPolicy,
 	}
+}
+
+func fromServiceStatefulSets(o []k8s.StatefulSet) []StatefulSet {
+	ps := []StatefulSet{}
+	for _, p := range o {
+		ps = append(ps, StatefulSet{
+			metadata: metadata{
+				Labels: p.Labels,
+			},
+			ServiceName: p.ServiceName,
+			Replicas:    p.Replicas,
+			PodTemplate: fromServicePodTemplate(p.PodTemplate),
+			Selector:    p.Selector,
+			Status:      p.Status,
+		})
+	}
+	return ps
 }

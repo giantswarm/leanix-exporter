@@ -1,5 +1,5 @@
-hash: 57a1ac84fc181b7dd1d492860eaa76f8f60c145fd8d98481d439f6bff5240684
-updated: 2017-07-27T16:14:16.293364922+02:00
+hash: e0cf726f7ba2b899f07ff571b00dbaba224171df0b0f46dcfa60ac37e5608dbe
+updated: 2017-08-03T12:56:52.219251314+02:00
 imports:
 - name: github.com/beorn7/perks
   version: 4c0e84591b9aa9e6dcfdf3e020114cd81f89d5f9
@@ -44,15 +44,15 @@ imports:
   - service/cert-signer
   - service/spec
 - name: github.com/giantswarm/kubernetesdclient
-  version: a35e7605d46bd93a68843a5528618603029fb273
+  version: 55efaa1d82c4c1219deef8e4ebfc606829862f9c
   subpackages:
   - service/creator
   - service/deleter
   - service/updater
 - name: github.com/giantswarm/microerror
-  version: 7bf6a0a6d24b1e3a03af3ed3a8e3531d792ea3e3
+  version: 5ade94eb4ee35ef72eb9382228470caeddb29989
 - name: github.com/giantswarm/microkit
-  version: c2f273484a749a94402dc3cfbd02913f57995484
+  version: b7202f147321db2dded732146cf40ecbb31e0c24
   subpackages:
   - command
   - command/daemon
@@ -62,7 +62,6 @@ imports:
   - command/daemon/flag/server/listen
   - command/daemon/flag/server/tls
   - command/version
-  - error
   - flag
   - logger
   - server
@@ -74,6 +73,8 @@ imports:
   - transaction
   - transaction/context/id
   - transaction/context/tracked
+- name: github.com/giantswarm/micrologger
+  version: 97740d3352f783c3b774db8bab314deff165f43b
 - name: github.com/go-kit/kit
   version: a9ca6725cbbea455e61c6bc8a1ed28e81eb3493b
   subpackages:
@@ -184,7 +185,7 @@ imports:
 - name: github.com/spf13/cast
   version: acbeb36b902d72a7a4c18e8f3241075e7ab763e4
 - name: github.com/spf13/cobra
-  version: 34594c771f2c18301dc152640ad40ece28795373
+  version: b26b538f693051ac6518e65672de3144ce3fbedc
 - name: github.com/spf13/jwalterweatherman
   version: 0efa5202c04663c757d84f90f5219c1250baf94f
 - name: github.com/spf13/pflag
@@ -259,7 +260,6 @@ imports:
   - certificates/v1beta1
   - core/v1
   - extensions/v1beta1
-  - imagepolicy/v1alpha1
   - networking/v1
   - policy/v1beta1
   - rbac/v1alpha1

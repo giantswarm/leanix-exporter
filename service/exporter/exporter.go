@@ -9,7 +9,7 @@ import (
 
 	"github.com/giantswarm/leanix-exporter/service/exporter/k8s"
 	"github.com/giantswarm/microerror"
-	micrologger "github.com/giantswarm/microkit/logger"
+	"github.com/giantswarm/micrologger"
 )
 
 // Response exporter is the exporter service response

@@ -2,7 +2,7 @@ package middleware
 
 import (
 	"github.com/giantswarm/leanix-exporter/service"
-	micrologger "github.com/giantswarm/microkit/logger"
+	"github.com/giantswarm/micrologger"
 )
 
 // Config represents the configuration used to create a middleware.

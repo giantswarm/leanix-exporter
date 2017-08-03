@@ -2,6 +2,24 @@
 
 Extract Kubernetes Cluster data for different source and expose it is a simple format for Leanix Integration
 
+## What LeanIX should store
+
+State Data, e.g. what is running (meta data)
+ * Taking Kubernetes Services, should give us a general overview of what is running in a cluster that is published
+ * Then possibly take other more internal things like deamonsets for internal things
+ 
+Time Series Data
+ * When did a deployment takes place and how many deployments are taking place
+ * Resource Usage of Containers (at the time of deployment)
+ * Total Resource Usage and Availability of Cluster (check Giant Swarm API)
+
+## When the LeanIX Exporter is called
+
+At best, we run on changes. otherwise we have two options.
+
+ * Run it every hour, minute, ... (resource usage needs to be checked as the exporter is currently querying the entire cluster)
+ * Allow the customer to tell the exporter to run based on e.g. deployments (check if we can listen to certain events)
+
 ## Result example
 
 ```json

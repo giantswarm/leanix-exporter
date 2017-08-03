@@ -11,8 +11,8 @@ import (
 	"github.com/giantswarm/leanix-exporter/server/middleware"
 	"github.com/giantswarm/leanix-exporter/service"
 	"github.com/giantswarm/microerror"
-	"github.com/giantswarm/micrologger"
 	microserver "github.com/giantswarm/microkit/server"
+	"github.com/giantswarm/micrologger"
 )
 
 // Config represents the configuration used to create a new server object.

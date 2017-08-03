@@ -10,7 +10,7 @@ import (
 	"github.com/giantswarm/leanix-exporter/service/exporter"
 	"github.com/giantswarm/leanix-exporter/service/version"
 	"github.com/giantswarm/microerror"
-	micrologger "github.com/giantswarm/microkit/logger"
+	"github.com/giantswarm/micrologger"
 )
 
 type Config struct {

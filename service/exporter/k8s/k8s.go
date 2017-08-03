@@ -16,6 +16,7 @@ type metadata struct {
 	Labels map[string]string
 }
 
+// Service is the kubernetes Service data
 type Service struct {
 	metadata
 	Name     string
@@ -24,12 +25,14 @@ type Service struct {
 	Selector map[string]string
 }
 
+// Deployment is the kubernetes Deployment data
 type Deployment struct {
 	metadata
 	Name   string
 	Status v1beta1.DeploymentStatus
 }
 
+// Pod is the kubernetes Pod data
 type Pod struct {
 	metadata
 	Name              string
@@ -37,6 +40,7 @@ type Pod struct {
 	ContainerStatuses []v1.ContainerStatus
 }
 
+// PodTemplate is the kubernetes PodTemplate data
 type PodTemplate struct {
 	metadata
 	Containers    []v1.Container
@@ -44,6 +48,7 @@ type PodTemplate struct {
 	DNSPolicy     string
 }
 
+// DaemonSet is the kubernetes DaemonSet data
 type DaemonSet struct {
 	metadata
 	Status      v1b1.DaemonSetStatus
@@ -51,6 +56,7 @@ type DaemonSet struct {
 	Selector    metav1.LabelSelector
 }
 
+// StatefulSet is the kubernetes StatefulSet data
 type StatefulSet struct {
 	metadata
 	ServiceName string
@@ -60,6 +66,7 @@ type StatefulSet struct {
 	Status      v1beta1.StatefulSetStatus
 }
 
+// CronJob is the kubernetes CronJob data
 type CronJob struct {
 	metadata
 	Name        string
@@ -69,11 +76,13 @@ type CronJob struct {
 	JobTemplate JobTemplate
 }
 
+// JobTemplate is the kubernetes JobTemplate data
 type JobTemplate struct {
 	metadata
 	PodTemplate PodTemplate
 }
 
+// Ingress is the kubernetes Ingress data
 type Ingress struct {
 	metadata
 	Backends *v1b1.IngressBackend
@@ -82,6 +91,7 @@ type Ingress struct {
 	Status   v1b1.IngressStatus
 }
 
+// NetworkPolicy is the kubernetes NetworkPolicy data
 type NetworkPolicy struct {
 	metadata
 	Name         string
@@ -89,6 +99,7 @@ type NetworkPolicy struct {
 	Selector     metav1.LabelSelector
 }
 
+// Namespace is the kubernetes Namespace data
 type Namespace struct {
 	metadata
 	Name            string
@@ -102,10 +113,11 @@ type Namespace struct {
 	NetworkPolicies []NetworkPolicy
 }
 
+// GetNamespaces returns the kubernetes Namespace related aggregated data
 func GetNamespaces(c *kubernetes.Clientset, excludes []string, log micrologger.Logger) ([]Namespace, error) {
 	ns, err := c.Namespaces().List(metav1.ListOptions{})
 	if err != nil {
-		return nil, err
+		return nil, microerror.Mask(err)
 	}
 	s := []Namespace{}
 	for _, n := range ns.Items {

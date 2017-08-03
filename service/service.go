@@ -65,8 +65,8 @@ func New(config Config) (*Service, error) {
 	var exporterService *exporter.Service
 	{
 		exporterConfig := exporter.DefaultConfig()
-		exporterConfig.Logger = config.Logger
 		exporterConfig.Excludes = config.Viper.GetStringSlice(config.Flag.Service.Excludes)
+		exporterConfig.Logger = config.Logger
 		exporterService, err = exporter.New(exporterConfig)
 		if err != nil {
 			return nil, microerror.Mask(err)

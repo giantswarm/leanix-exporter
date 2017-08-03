@@ -76,10 +76,17 @@ type JobTemplate struct {
 
 type Ingress struct {
 	metadata
-	Backends v1b1.IngressBackend
+	Backends *v1b1.IngressBackend
 	Rules    []v1b1.IngressRule
 	TLSHosts []v1b1.IngressTLS
 	Status   v1b1.IngressStatus
+}
+
+type NetworkPolicy struct {
+	metadata
+	Name         string
+	IngressRules []v1b1.NetworkPolicyIngressRule
+	Selector     metav1.LabelSelector
 }
 
 type Namespace struct {
@@ -95,47 +102,50 @@ type Namespace struct {
 	NetworkPolicies []NetworkPolicy
 }
 
-func GetNamespaces(c *kubernetes.Clientset, excludes []string, log micrologger.Logger) []Namespace {
-	// creates the in-cluster config
+func GetNamespaces(c *kubernetes.Clientset, excludes []string, log micrologger.Logger) ([]Namespace, error) {
 	ns, err := c.Namespaces().List(metav1.ListOptions{})
 	if err != nil {
-		//TODO use other than panic
-		panic(err.Error())
+		return nil, err
 	}
 	s := []Namespace{}
 	for _, n := range ns.Items {
 		if !isExcluded(excludes, n.Name) {
 			depls, err := getDeployments(c, n.Name)
 			if err != nil {
-				log.Log("debug", err)
+				log.Log("warning", err)
+			}
+
+			pods, err := getPods(c, n.Name)
+			if err != nil {
+				log.Log("warning", err)
 			}
 
 			svcs, err := getServices(c, n.Name)
 			if err != nil {
-				log.Log("debug", err)
+				log.Log("warning", err)
 			}
 
 			dss, err := getDaemonSets(c, n.Name)
 			if err != nil {
-				log.Log("debug", err)
+				log.Log("warning", err)
 			}
 
 			sss, err := getStatefulSets(c, n.Name)
 			if err != nil {
-				log.Log("debug", err)
+				log.Log("warning", err)
 			}
 			cjs, err := getCronJobs(c, n.Name)
 			if err != nil {
-				log.Log("debug", err)
+				log.Log("warning", err)
 			}
 
 			is, err := getIngresses(c, n.Name)
 			if err != nil {
-				log.Log("debug", err)
+				log.Log("warning", err)
 			}
-			nps, err := GetNetworkPolicies(c, n.Name)
+			nps, err := getNetworkPolicies(c, n.Name)
 			if err != nil {
-				log.Log("debug", err)
+				log.Log("warning", err)
 			}
 
 			s = append(s, Namespace{
@@ -143,7 +153,7 @@ func GetNamespaces(c *kubernetes.Clientset, excludes []string, log micrologger.L
 					Labels: n.Labels,
 				},
 				Name:            n.Name,
-				Pods:            getPods(c, n.Name),
+				Pods:            pods,
 				Deployments:     depls,
 				Services:        svcs,
 				DaemonSet:       dss,
@@ -155,13 +165,13 @@ func GetNamespaces(c *kubernetes.Clientset, excludes []string, log micrologger.L
 		}
 	}
 
-	return s
+	return s, nil
 }
 
 func getDeployments(c *kubernetes.Clientset, ns string) ([]Deployment, error) {
 	depls, err := c.AppsV1beta1().Deployments(ns).List(metav1.ListOptions{})
 	if err != nil {
-		return []Deployment{}, microerror.Mask(err)
+		return nil, microerror.Mask(err)
 	}
 
 	s := []Deployment{}
@@ -178,12 +188,10 @@ func getDeployments(c *kubernetes.Clientset, ns string) ([]Deployment, error) {
 	return s, nil
 }
 
-func getPods(c *kubernetes.Clientset, ns string) []Pod {
-	// creates the in-cluster config
+func getPods(c *kubernetes.Clientset, ns string) ([]Pod, error) {
 	pods, err := c.Pods(ns).List(metav1.ListOptions{})
 	if err != nil {
-		//TODO use other than panic
-		panic(err.Error())
+		return nil, err
 	}
 
 	ps := []Pod{}
@@ -197,13 +205,13 @@ func getPods(c *kubernetes.Clientset, ns string) []Pod {
 			},
 		})
 	}
-	return ps
+	return ps, nil
 }
 
 func getServices(c *kubernetes.Clientset, ns string) ([]Service, error) {
 	services, err := c.Services(ns).List(metav1.ListOptions{})
 	if err != nil {
-		return []Service{}, microerror.Mask(err)
+		return nil, microerror.Mask(err)
 	}
 
 	ss := []Service{}
@@ -225,7 +233,7 @@ func getDaemonSets(c *kubernetes.Clientset, ns string) ([]DaemonSet, error) {
 	dss, err := c.DaemonSets(ns).List(metav1.ListOptions{})
 
 	if err != nil {
-		return []DaemonSet{}, microerror.Mask(err)
+		return nil, microerror.Mask(err)
 	}
 
 	ds := []DaemonSet{}
@@ -244,13 +252,12 @@ func getDaemonSets(c *kubernetes.Clientset, ns string) ([]DaemonSet, error) {
 }
 
 func getStatefulSets(c *kubernetes.Clientset, ns string) ([]StatefulSet, error) {
-
-	ss := []StatefulSet{}
 	statefulSets, err := c.AppsV1beta1().StatefulSets(ns).List(metav1.ListOptions{})
 
 	if err != nil {
-		return ss, microerror.Mask(err)
+		return nil, microerror.Mask(err)
 	}
+	ss := []StatefulSet{}
 
 	for _, s := range statefulSets.Items {
 
@@ -270,13 +277,12 @@ func getStatefulSets(c *kubernetes.Clientset, ns string) ([]StatefulSet, error) 
 }
 
 func getCronJobs(c *kubernetes.Clientset, ns string) ([]CronJob, error) {
-
-	cj := []CronJob{}
 	cronjobs, err := c.BatchV2alpha1().CronJobs(ns).List(metav1.ListOptions{})
 
 	if err != nil {
-		return cj, microerror.Mask(err)
+		return nil, microerror.Mask(err)
 	}
+	cj := []CronJob{}
 
 	for _, s := range cronjobs.Items {
 		cj = append(cj, CronJob{
@@ -294,19 +300,19 @@ func getCronJobs(c *kubernetes.Clientset, ns string) ([]CronJob, error) {
 }
 
 func getIngresses(c *kubernetes.Clientset, ns string) ([]Ingress, error) {
-	is := []Ingress{}
 	ingresses, err := c.ExtensionsV1beta1().Ingresses(ns).List(metav1.ListOptions{})
 
 	if err != nil {
-		return is, microerror.Mask(err)
+		return nil, microerror.Mask(err)
 	}
+	is := []Ingress{}
 	for _, i := range ingresses.Items {
 		is = append(is, Ingress{
 			metadata: metadata{
 				Labels: i.Labels,
 			},
 			Status:   i.Status,
-			Backends: MustBackend(i.Spec.Backend),
+			Backends: i.Spec.Backend,
 			Rules:    i.Spec.Rules,
 			TLSHosts: i.Spec.TLS,
 		})
@@ -315,15 +321,7 @@ func getIngresses(c *kubernetes.Clientset, ns string) ([]Ingress, error) {
 	return is, nil
 }
 
-type NetworkPolicy struct {
-	metadata
-	Name         string
-	IngressRules []v1b1.NetworkPolicyIngressRule
-	Selector     metav1.LabelSelector
-}
-
-func GetNetworkPolicies(c *kubernetes.Clientset, ns string) ([]NetworkPolicy, error) {
-	nps := []NetworkPolicy{}
+func getNetworkPolicies(c *kubernetes.Clientset, ns string) ([]NetworkPolicy, error) {
 	npl := &v1b1.NetworkPolicyList{}
 	err := c.ExtensionsV1beta1().RESTClient().Get().
 		Namespace(ns).
@@ -331,9 +329,10 @@ func GetNetworkPolicies(c *kubernetes.Clientset, ns string) ([]NetworkPolicy, er
 		Do().
 		Into(npl)
 	if err != nil {
-		return []NetworkPolicy{}, microerror.Mask(err)
+		return nil, microerror.Mask(err)
 	}
 
+	nps := []NetworkPolicy{}
 	for _, n := range npl.Items {
 		nps = append(nps, NetworkPolicy{
 			metadata: metadata{
@@ -348,13 +347,6 @@ func GetNetworkPolicies(c *kubernetes.Clientset, ns string) ([]NetworkPolicy, er
 	return nps, nil
 }
 
-func MustBackend(b *v1b1.IngressBackend) v1b1.IngressBackend {
-	if b == nil {
-		return v1b1.IngressBackend{}
-	}
-
-	return *b
-}
 func fromPodTemplateSpec(pst v1.PodTemplateSpec) PodTemplate {
 	return PodTemplate{
 		metadata: metadata{

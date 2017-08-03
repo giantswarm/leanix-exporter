@@ -77,10 +77,10 @@ type JobTemplate struct {
 
 type Ingress struct {
 	metadata `json:"metadata,omitempty"`
-	Backends v1b1.IngressBackend `json:"backends,omitempty"`
-	Rules    []v1b1.IngressRule  `json:"rules,omitempty"`
-	TLSHosts []v1b1.IngressTLS   `json:"tls_hosts,omitempty"`
-	Status   v1b1.IngressStatus  `json:"status,omitempty"`
+	Backends *v1b1.IngressBackend `json:"backends,omitempty"`
+	Rules    []v1b1.IngressRule   `json:"rules,omitempty"`
+	TLSHosts []v1b1.IngressTLS    `json:"tls_hosts,omitempty"`
+	Status   v1b1.IngressStatus   `json:"status,omitempty"`
 }
 
 type NetworkPolicy struct {

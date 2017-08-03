@@ -8,6 +8,7 @@ import (
 
 	kitendpoint "github.com/go-kit/kit/endpoint"
 	kithttp "github.com/go-kit/kit/transport/http"
+	"github.com/gorilla/mux"
 
 	"github.com/giantswarm/leanix-exporter/server/endpoint/exporter/k8s"
 	"github.com/giantswarm/leanix-exporter/server/middleware"
@@ -22,7 +23,7 @@ const (
 	// Name identifies the endpoint. It is aligned to the package path.
 	Name = "exporter"
 	// Path is the HTTP request path this endpoint is registered for.
-	Path = "/exporter/"
+	Path = "/exporter/{namespace}"
 )
 
 // Config represents the configuration used to create a version endpoint.
@@ -75,6 +76,7 @@ type Endpoint struct {
 
 func (e *Endpoint) Decoder() kithttp.DecodeRequestFunc {
 	return func(ctx context.Context, r *http.Request) (interface{}, error) {
+		e.Logger.Log("debug", "namespace:", mux.Vars(r)["namespace"])
 		return nil, nil
 	}
 }
